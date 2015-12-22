@@ -23,6 +23,7 @@ module MettlRuby
       @config.validate
     end
 
+    #Mettl API Documentation v1.18.pdf Section#4.1
     def assessments(sort_param: "createdAt", sort_order: "desc")
       params = init_params
       params[:sort] = sort_param
@@ -51,6 +52,7 @@ module MettlRuby
       return assessments.flatten!
     end
 
+    #Mettl API Documentation v1.18.pdf Section#4.2
     def assessment assessment_id
       params = init_params
       request_url = UrlGenerator.url_for("assessments", assessment_id)
@@ -64,10 +66,12 @@ module MettlRuby
       end
     end
 
+    #Mettl API Documentation v1.18.pdf Section#4.6
     def edit_assessment assessment_id, edit_details
       raise NotImplementedError
     end
 
+    #Mettl API Documentation v1.18.pdf Section#4.4
     def schedules
       params = init_params
       request_url = UrlGenerator.url_for("schedules")
@@ -81,6 +85,7 @@ module MettlRuby
       end
     end
 
+    #Mettl API Documentation v1.18.pdf Section#4.5
     def schedule_detail access_key
       params = init_params
       request_url = UrlGenerator.url_for("schedules", access_key)
@@ -94,6 +99,7 @@ module MettlRuby
       end
     end
 
+    #Mettl API Documentation v1.18.pdf Section#5.1
     def schedules_for_assessment assessment_id
       params = init_params
       request_url = UrlGenerator.url_for("assessments", "#{assessment_id}/schedules")
@@ -107,6 +113,7 @@ module MettlRuby
       end
     end
 
+    #Mettl API Documentation v1.18.pdf Section#4.1
     def create_schedule_for_assessment assessment_id, schedule_detail
       params = init_params
       params[:sc] = schedule_detail.to_json
@@ -120,6 +127,113 @@ module MettlRuby
         return res["error"].values.join ": "
       end
     end
+
+    #Mettl API Documentation v1.18.pdf Section#5.2
+    def edit_schedule access_key, edit_details
+      params = init_params
+      params[:sc] = edit_details.to_json
+      request_url = UrlGenerator.url_for("schedules", "#{access_key}/edit")
+      asgn = SignatureGenerator.signature_for(http_verb: 'POST', url: request_url, params: params, private_key: @config.private_key)
+
+      res = self.class.post(request_url, query: params.merge!({asgn: asgn}))
+      if res["status"] == "SUCCESS"
+        return res["schedule"]
+      else
+        return res["error"].values.join ": "
+      end
+    end
+
+    #Mettl API Documentation v1.18.pdf Section#6.1.2
+    def register_candidates_for_schedule access_key, candidate_details
+      return "Can register a maximum of 20 candidates at a time." if candidate_details.count > 20
+
+      params = init_params
+      params[:rd] = { registrationDetails: candidate_details}.to_json
+      request_url = UrlGenerator.url_for("schedules", "#{access_key}/candidates")
+      asgn = SignatureGenerator.signature_for(http_verb: 'POST', url: request_url, params: params, private_key: @config.private_key)
+
+      res = self.class.post(request_url, query: params.merge!({asgn: asgn}))
+      if res["status"] == "SUCCESS"
+        return res["registrationStatus"]
+      else
+        return res["error"].values.join ": "
+      end
+    end
+
+    #Mettl API Documentation v1.18.pdf Section#6.2
+    def status_for_schedule access_key, qr: false, sort_param: "testStartTime", sort_order: "desc"
+      params = init_params
+      params[:qr] = qr
+      params[:sort] = sort_param
+      params[:sort_order] = sort_order
+
+      request_url = UrlGenerator.url_for("schedules", "#{access_key}/candidates")
+      asgn = SignatureGenerator.signature_for(http_verb: 'GET', url: request_url, params: params, private_key: @config.private_key)
+
+      candidate_statuses = []
+      res = self.class.get(request_url, query: params.merge!({asgn: asgn}))
+      if res["status"] == "SUCCESS"
+        candidate_statuses << res["candidates"]
+        while !res["paging"]["next"].nil? do
+          p "Connecting to #{res["paging"]["next"]}"
+          res = self.class.get res["paging"]["next"]
+          if res["status"] == "SUCCESS"
+            candidate_statuses << res["candidates"]
+          else
+            return res["error"].values.join ": "
+          end
+        end
+      else
+        return res["error"].values.join ": "
+      end
+
+      return candidate_statuses.flatten!
+    end
+
+    #Mettl API Documentation v1.18.pdf Section#6.3
+    def candidate_status_for_schedule candidate_email, access_key, qr: false
+      params = init_params
+      params[:qr] = qr
+      request_url = UrlGenerator.url_for("schedules", "#{access_key}/candidates/#{candidate_email}")
+      asgn = SignatureGenerator.signature_for(http_verb: 'GET', url: request_url, params: params, private_key: @config.private_key)
+
+      res = self.class.get(request_url, query: params.merge!({asgn: asgn}))
+      if res["status"] == "SUCCESS"
+        return res["candidate"]
+      else
+        return res["error"].values.join ": "
+      end
+    end
+
+    #Mettl API Documentation v1.18.pdf Section#6.4
+    def delete_report
+      params = init_params
+      request_url = UrlGenerator.url_for("schedules", "#{access_key}/candidates/#{candidate_email}")
+      asgn = SignatureGenerator.signature_for(http_verb: 'DELETE', url: request_url, params: params, private_key: @config.private_key)
+
+      res = self.class.delete(request_url, query: params.merge!({asgn: asgn}))
+      if res["status"] == "SUCCESS"
+        return res["status"]
+      else
+        return res["error"].values.join ": "
+      end
+    end
+
+    #Mettl API Documentation v1.18.pdf Section#7
+    def candidate_details candidate_email, qr: false
+      params = init_params
+      params[:qr] = qr
+      request_url = UrlGenerator.url_for("candidates", candidate_email)
+      asgn = SignatureGenerator.signature_for(http_verb: 'GET', url: request_url, params: params, private_key: @config.private_key)
+
+      res = self.class.get(request_url, query: params.merge!({asgn: asgn}))
+      if res["status"] == "SUCCESS"
+        return res["testInstances"]
+      else
+        return res["error"].values.join ": "
+      end
+    end
+
 
     def dummry_schedule assessment_id
       {
