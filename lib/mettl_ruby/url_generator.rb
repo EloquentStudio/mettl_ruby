@@ -1,7 +1,7 @@
 module MettlRuby
   module UrlGenerator
   	BaseUrl = "http://api.mettl.com/v1"
-    KnownObjects = ["assessments", "schedule", "schedules"]
+    KnownObjects = ["assessments", "schedule", "schedules", "account", "candidates", "pbts"]
 
     class UnknownObject < StandardError
       attr_reader :object, :message

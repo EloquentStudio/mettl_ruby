@@ -4,6 +4,7 @@ require 'openssl'
 require 'base64'
 require 'json'
 require 'httparty'
+require 'httmultiparty'
 require 'pry'
 require 'pry-nav'
 
@@ -16,11 +17,93 @@ require "mettl_ruby/errors"
 module MettlRuby
   class Mettl
     include HTTParty
+    include HTTMultiParty
 
     def initialize(opts = {}, &block)
       @config = Config.new(opts)
       yield(@config) if block_given?
       @config.validate
+    end
+
+    #Mettl API Documentation v1.18.pdf Section#2.1
+    def account_info language_code: "en"
+      params = init_params
+      params[:languageCode] = language_code
+      request_url = UrlGenerator.url_for("account")
+      asgn = SignatureGenerator.signature_for(http_verb: 'GET', url: request_url, params: params, private_key: @config.private_key)
+
+      res = self.class.get(request_url, query: params.merge!({asgn: asgn}))
+      if res["status"] == "SUCCESS"
+        return res["accountInfo"]
+      else
+        return res["error"].values.join ": "
+      end
+    end
+
+    #Mettl API Documentation v1.18.pdf Section#2.2
+    def add_logo file_path
+      params = init_params
+      request_url = UrlGenerator.url_for("account", "upload-logo")
+      asgn = SignatureGenerator.signature_for(http_verb: 'POST', url: request_url, params: params, private_key: @config.private_key)
+
+      res = self.class.post(request_url,
+        query: params.merge!(
+          {
+            asgn: asgn,
+            logo: File.new(file_path)
+          }
+        )
+      )
+      if res["status"] == "SUCCESS"
+        return res["status"]
+      else
+        return res["error"].values.join ": "
+      end
+    end
+
+    #Mettl API Documentation v1.18.pdf Section#2.3
+    def whitelist_info
+      raise NotImplementedError
+      params = init_params
+      params[:languageCode] = language_code
+      request_url = UrlGenerator.url_for("account")
+      asgn = SignatureGenerator.signature_for(http_verb: 'GET', url: request_url, params: params, private_key: @config.private_key)
+
+      res = self.class.get(request_url, query: params.merge!({asgn: asgn}))
+      if res["status"] == "SUCCESS"
+        return res["accountInfo"]
+      else
+        return res["error"].values.join ": "
+      end
+    end
+
+    #Mettl API Documentation v1.18.pdf Section#3.1
+    def list_pbts
+      params = init_params
+      request_url = UrlGenerator.url_for("pbts")
+      asgn = SignatureGenerator.signature_for(http_verb: 'GET', url: request_url, params: params, private_key: @config.private_key)
+
+      res = self.class.get(request_url, query: params.merge!({asgn: asgn}))
+      if res["status"] == "SUCCESS"
+        return res["pbts"]
+      else
+        return res["error"].values.join ": "
+      end
+    end
+
+    #Mettl API Documentation v1.18.pdf Section#3.2
+    def add_pbts pbts
+      params = init_params
+      params[:pbts] = pbts.to_json
+      request_url = UrlGenerator.url_for("pbts", "add")
+      asgn = SignatureGenerator.signature_for(http_verb: 'POST', url: request_url, params: params, private_key: @config.private_key)
+
+      res = self.class.post(request_url, query: params.merge!({asgn: asgn}))
+      if res["status"] == "SUCCESS"
+        return res["pbts"]
+      else
+        return res["error"].values.join ": "
+      end
     end
 
     #Mettl API Documentation v1.18.pdf Section#4.1
@@ -31,7 +114,7 @@ module MettlRuby
 
       request_url = UrlGenerator.url_for('assessments')
       asgn = SignatureGenerator.signature_for(http_verb: 'GET', url: request_url, params: params, private_key: @config.private_key)
-      
+
       assessments = []
       res = self.class.get(request_url, query: params.merge!({asgn: asgn}))
       if res["status"] == "SUCCESS"
@@ -57,7 +140,7 @@ module MettlRuby
       params = init_params
       request_url = UrlGenerator.url_for("assessments", assessment_id)
       asgn = SignatureGenerator.signature_for(http_verb: 'GET', url: request_url, params: params, private_key: @config.private_key)
-      
+
       res = self.class.get(request_url, query: params.merge!({asgn: asgn}))
       if res["status"] == "SUCCESS"
         return res["assessment"]
