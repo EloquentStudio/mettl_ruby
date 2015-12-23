@@ -62,14 +62,16 @@ module MettlRuby
     end
 
     #Mettl API Documentation v1.18.pdf Section#2.3
-    def whitelist_info
-      raise NotImplementedError
+    def whitelist_info whitelist, favicon:, cover:, support_numbers:
       params = init_params
-      params[:languageCode] = language_code
+      params[:wl] = whitelist.to_json
+      params[:support_numbers] = support_numbers.to_json if support_numbers 
       request_url = UrlGenerator.url_for("account")
-      asgn = SignatureGenerator.signature_for(http_verb: 'GET', url: request_url, params: params, private_key: @config.private_key)
+      asgn = SignatureGenerator.signature_for(http_verb: 'POST', url: request_url, params: params, private_key: @config.private_key)
 
-      res = self.class.get(request_url, query: params.merge!({asgn: asgn}))
+      params[:fav] = File.new(favicon) if favicon
+      params[:cov] = File.new(cover) if cover
+      res = self.class.post(request_url, query: params.merge!({asgn: asgn}))
       if res["status"] == "SUCCESS"
         return res["accountInfo"]
       else
@@ -150,8 +152,18 @@ module MettlRuby
     end
 
     #Mettl API Documentation v1.18.pdf Section#4.6
-    def edit_assessment assessment_id, edit_details
-      raise NotImplementedError
+    def edit_assessment_settings assessment_id, edit_details
+      params = init_params
+      params[:as] = edit_details.to_json
+      request_url = UrlGenerator.url_for("assessments", "#{assessment_id}/settings/edit")
+      asgn = SignatureGenerator.signature_for(http_verb: 'POST', url: request_url, params: params, private_key: @config.private_key)
+
+      res = self.class.post(request_url, query: params.merge!({asgn: asgn}))
+      if res["status"] == "SUCCESS"
+        return res["schedule"]
+      else
+        return res["error"].values.join ": "
+      end
     end
 
     #Mettl API Documentation v1.18.pdf Section#4.4
