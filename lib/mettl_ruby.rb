@@ -62,11 +62,11 @@ module MettlRuby
     end
 
     #Mettl API Documentation v1.18.pdf Section#2.3
-    def whitelist_info whitelist, favicon:, cover:, support_numbers:
+    def whitelist_info whitelist, favicon: nil, cover: nil, support_numbers: nil
       params = init_params
       params[:wl] = whitelist.to_json
       params[:support_numbers] = support_numbers.to_json if support_numbers 
-      request_url = UrlGenerator.url_for("account")
+      request_url = UrlGenerator.url_for("account", "update-white-labeling")
       asgn = SignatureGenerator.signature_for(http_verb: 'POST', url: request_url, params: params, private_key: @config.private_key)
 
       params[:fav] = File.new(favicon) if favicon
