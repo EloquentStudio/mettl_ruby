@@ -38,7 +38,7 @@ module MettlRuby
         if res["status"] == "SUCCESS"
           return res["accountInfo"]
         else
-          return res["error"].values.join ": "
+          return error_response_for(res)
         end
       end
 
@@ -59,7 +59,7 @@ module MettlRuby
         if res["status"] == "SUCCESS"
           return res["status"]
         else
-          return res["error"].values.join ": "
+          return error_response_for(res)
         end
       end
 
@@ -77,7 +77,7 @@ module MettlRuby
         if res["status"] == "SUCCESS"
           return res["accountInfo"]
         else
-          return res["error"].values.join ": "
+          return error_response_for(res)
         end
       end
 
@@ -91,7 +91,7 @@ module MettlRuby
         if res["status"] == "SUCCESS"
           return res["pbts"]
         else
-          return res["error"].values.join ": "
+          return error_response_for(res)
         end
       end
 
@@ -106,7 +106,7 @@ module MettlRuby
         if res["status"] == "SUCCESS"
           return res["pbts"]
         else
-          return res["error"].values.join ": "
+          return error_response_for(res)
         end
       end
 
@@ -129,11 +129,11 @@ module MettlRuby
             if res["status"] == "SUCCESS"
               assessments << res["assessments"]
             else
-              return res["error"].values.join ": "
+              return error_response_for(res)
             end
           end
         else
-          return res["error"].values.join ": "
+          return error_response_for(res)
         end
 
         return assessments.flatten!
@@ -149,7 +149,7 @@ module MettlRuby
         if res["status"] == "SUCCESS"
           return res["assessment"]
         else
-          return res["error"].values.join ": "
+          return error_response_for(res)
         end
       end
 
@@ -164,7 +164,7 @@ module MettlRuby
         if res["status"] == "SUCCESS"
           return res["schedule"]
         else
-          return res["error"].values.join ": "
+          return error_response_for(res)
         end
       end
 
@@ -178,7 +178,7 @@ module MettlRuby
         if res["status"] == "SUCCESS"
           return res["schedules"]
         else
-          return res["error"].values.join ": "
+          return error_response_for(res)
         end
       end
 
@@ -192,7 +192,7 @@ module MettlRuby
         if res["status"] == "SUCCESS"
           return res["schedule"]
         else
-          return res["error"].values.join ": "
+          return error_response_for(res)
         end
       end
 
@@ -206,7 +206,7 @@ module MettlRuby
         if res["status"] == "SUCCESS"
           return res["schedules"]
         else
-          return res["error"].values.join ": "
+          return error_response_for(res)
         end
       end
 
@@ -221,7 +221,7 @@ module MettlRuby
         if res["status"] == "SUCCESS"
           return res["createdSchedule"]
         else
-          return res["error"].values.join ": "
+          return error_response_for(res)
         end
       end
 
@@ -236,7 +236,7 @@ module MettlRuby
         if res["status"] == "SUCCESS"
           return res["schedule"]
         else
-          return res["error"].values.join ": "
+          return error_response_for(res)
         end
       end
 
@@ -253,7 +253,7 @@ module MettlRuby
         if res["status"] == "SUCCESS"
           return res["registrationStatus"]
         else
-          return res["error"].values.join ": "
+          return error_response_for(res)
         end
       end
 
@@ -277,11 +277,11 @@ module MettlRuby
             if res["status"] == "SUCCESS"
               candidate_statuses << res["candidates"]
             else
-              return res["error"].values.join ": "
+              return error_response_for(res)
             end
           end
         else
-          return res["error"].values.join ": "
+          return error_response_for(res)
         end
 
         return candidate_statuses.flatten!
@@ -298,7 +298,7 @@ module MettlRuby
         if res["status"] == "SUCCESS"
           return res["candidate"]
         else
-          return res["error"].values.join ": "
+          return error_response_for(res)
         end
       end
 
@@ -312,7 +312,7 @@ module MettlRuby
         if res["status"] == "SUCCESS"
           return res["status"]
         else
-          return res["error"].values.join ": "
+          return error_response_for(res)
         end
       end
 
@@ -327,7 +327,7 @@ module MettlRuby
         if res["status"] == "SUCCESS"
           return res["testInstances"]
         else
-          return res["error"].values.join ": "
+          return error_response_for(res)
         end
       end
 
@@ -361,9 +361,25 @@ module MettlRuby
         }
       end
 
+      def debug
+        MettlRuby::Mettl.configure do |config|
+          config.public_key = ""
+          config.private_key = ""
+        end
+      end
+
       private
       def init_params
         return {ts: Time.now.to_i, ak: config.public_key}
+      end
+
+      def error_response_for(response)
+        {
+          error: {
+            code: response["error"]["code"],
+            message: response["error"]["message"]
+          }
+        }
       end
     end
   end
