@@ -375,9 +375,9 @@ module MettlRuby
 
       def error_response_for(response)
         {
-          error: {
-            code: response["error"]["code"],
-            message: response["error"]["message"]
+          "error" => {
+            "code" => response["error"]["code"],
+            "message" => response["error"]["message"]
           }
         }
       end
