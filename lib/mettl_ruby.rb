@@ -36,7 +36,7 @@ module MettlRuby
 
         res = self.get(request_url, query: params.merge!({asgn: asgn}))
         if res["status"] == "SUCCESS"
-          return res["accountInfo"]
+          return res
         else
           return error_response_for(res)
         end
@@ -57,7 +57,7 @@ module MettlRuby
           )
         )
         if res["status"] == "SUCCESS"
-          return res["status"]
+          return res
         else
           return error_response_for(res)
         end
@@ -75,7 +75,7 @@ module MettlRuby
         params[:cov] = File.new(cover) if cover
         res = self.post(request_url, query: params.merge!({asgn: asgn}))
         if res["status"] == "SUCCESS"
-          return res["accountInfo"]
+          return res
         else
           return error_response_for(res)
         end
@@ -89,7 +89,7 @@ module MettlRuby
 
         res = self.get(request_url, query: params.merge!({asgn: asgn}))
         if res["status"] == "SUCCESS"
-          return res["pbts"]
+          return res
         else
           return error_response_for(res)
         end
@@ -104,7 +104,7 @@ module MettlRuby
 
         res = self.post(request_url, query: params.merge!({asgn: asgn}))
         if res["status"] == "SUCCESS"
-          return res["pbts"]
+          return res
         else
           return error_response_for(res)
         end
@@ -124,7 +124,6 @@ module MettlRuby
         if res["status"] == "SUCCESS"
           assessments << res["assessments"]
           while !res["paging"]["next"].nil? do
-            p "Connecting to #{res["paging"]["next"]}"
             res = self.get res["paging"]["next"]
             if res["status"] == "SUCCESS"
               assessments << res["assessments"]
@@ -136,7 +135,7 @@ module MettlRuby
           return error_response_for(res)
         end
 
-        return assessments.flatten!
+        return {"status"=> "SUCCESS", "assessments"=> assessments.flatten}
       end
 
       #Mettl API Documentation v1.18.pdf Section#4.2
@@ -147,7 +146,7 @@ module MettlRuby
 
         res = self.get(request_url, query: params.merge!({asgn: asgn}))
         if res["status"] == "SUCCESS"
-          return res["assessment"]
+          return res
         else
           return error_response_for(res)
         end
@@ -162,7 +161,7 @@ module MettlRuby
 
         res = self.post(request_url, query: params.merge!({asgn: asgn}))
         if res["status"] == "SUCCESS"
-          return res["schedule"]
+          return res
         else
           return error_response_for(res)
         end
@@ -176,7 +175,7 @@ module MettlRuby
 
         res = self.get(request_url, query: params.merge!({asgn: asgn}))
         if res["status"] == "SUCCESS"
-          return res["schedules"]
+          return res
         else
           return error_response_for(res)
         end
@@ -190,7 +189,7 @@ module MettlRuby
 
         res = self.get(request_url, query: params.merge!({asgn: asgn}))
         if res["status"] == "SUCCESS"
-          return res["schedule"]
+          return res
         else
           return error_response_for(res)
         end
@@ -204,7 +203,7 @@ module MettlRuby
 
         res = self.get(request_url, query: params.merge!({asgn: asgn}))
         if res["status"] == "SUCCESS"
-          return res["schedules"]
+          return res
         else
           return error_response_for(res)
         end
@@ -219,7 +218,7 @@ module MettlRuby
 
         res = self.post(request_url, query: params.merge!({asgn: asgn}))
         if res["status"] == "SUCCESS"
-          return res["createdSchedule"]
+          return res
         else
           return error_response_for(res)
         end
@@ -234,7 +233,7 @@ module MettlRuby
 
         res = self.post(request_url, query: params.merge!({asgn: asgn}))
         if res["status"] == "SUCCESS"
-          return res["schedule"]
+          return res
         else
           return error_response_for(res)
         end
@@ -251,7 +250,7 @@ module MettlRuby
 
         res = self.post(request_url, query: params.merge!({asgn: asgn}))
         if res["status"] == "SUCCESS"
-          return res["registrationStatus"]
+          return res
         else
           return error_response_for(res)
         end
@@ -284,7 +283,7 @@ module MettlRuby
           return error_response_for(res)
         end
 
-        return candidate_statuses.flatten!
+        return {"status"=> "SUCCESS", "schedule_status"=> candidate_statuses.flatten}
       end
 
       #Mettl API Documentation v1.18.pdf Section#6.3
@@ -296,7 +295,7 @@ module MettlRuby
 
         res = self.get(request_url, query: params.merge!({asgn: asgn}))
         if res["status"] == "SUCCESS"
-          return res["candidate"]
+          return res
         else
           return error_response_for(res)
         end
@@ -310,7 +309,7 @@ module MettlRuby
 
         res = self.delete(request_url, query: params.merge!({asgn: asgn}))
         if res["status"] == "SUCCESS"
-          return res["status"]
+          return res
         else
           return error_response_for(res)
         end
@@ -325,7 +324,7 @@ module MettlRuby
 
         res = self.get(request_url, query: params.merge!({asgn: asgn}))
         if res["status"] == "SUCCESS"
-          return res["testInstances"]
+          return res
         else
           return error_response_for(res)
         end
@@ -375,6 +374,7 @@ module MettlRuby
 
       def error_response_for(response)
         {
+          "status"=> "error",
           "error" => {
             "code" => response["error"]["code"],
             "message" => response["error"]["message"]
