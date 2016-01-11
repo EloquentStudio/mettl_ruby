@@ -240,11 +240,11 @@ module MettlRuby
       end
 
       #Mettl API Documentation v1.18.pdf Section#6.1.2
-      def register_candidates_for_schedule access_key, candidate_details
+      def register_candidates_for_schedule access_key, candidate_details, optional_params: nil
         return "Can register a maximum of 20 candidates at a time." if candidate_details.count > 20
 
         params = init_params
-        params[:rd] = { registrationDetails: candidate_details}.to_json
+        params[:rd] = { registrationDetails: candidate_details, optionalParams: optional_params}.to_json
         request_url = UrlGenerator.url_for("schedules", "#{access_key}/candidates")
         asgn = SignatureGenerator.signature_for(http_verb: 'POST', url: request_url, params: params)
 
