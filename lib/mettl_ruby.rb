@@ -5,8 +5,8 @@ require 'base64'
 require 'json'
 require 'httparty'
 require 'httmultiparty'
-require 'pry'
-require 'pry-nav'
+#require 'pry'
+#require 'pry-nav'
 
 require "mettl_ruby/version"
 require "mettl_ruby/config"
